@@ -42,7 +42,6 @@ end
 include("sandwich.jl")
 include("split.jl")
 include("join.jl")
-using Plots
 
 @enum Mode reduction recovery smoothing
 
