@@ -1,7 +1,7 @@
 name = "LinearBand"
 uuid = "e5cab26e-c5ce-48e0-bb1c-98fd263da73b"
 authors = ["Allan R. Willms"]
-version = "1.0.0-DEV"
+version = "1.0.0"
 
 [compat]
 julia = "1.6.7"
