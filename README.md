@@ -1,4 +1,4 @@
-# LinearBand
+# LinearBand.jl
 
 	(band,height,tmin) = linearband(t, y, tmin_constraint; minheightfrac=0.8, variableheight=false)
 
