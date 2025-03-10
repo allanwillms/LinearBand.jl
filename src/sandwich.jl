@@ -16,8 +16,6 @@ function sandwich!(segment, t, y)
 		n = n+1
 		(exchangemade,res,E,slope) = remez1step!(segment.pivot, tseg, yseg)
 		if n == 20
-			println(" Remez error")
-			@show yseg
 			error("took 20 iterations of remez")
 		end
 	end

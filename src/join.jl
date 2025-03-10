@@ -1,7 +1,5 @@
 function joinsegs!(tjoin,yjoin,indices,segsort,segment,t,y)
 	# call joinseg! (boundtype=0 (midline)) for each i in indices[1]:indices[2]
-	# After each call, test to see if the segment to the left must be swallowed.
-	# If so, we will need to recompute tjoin.
 	for i in indices[1]:indices[2]
 		joinseg!(tjoin,yjoin,i,0,segsort,segment,t,y)
 	end
@@ -31,32 +29,17 @@ function joinseg!(tjoin,yjoin,i,boundtype,segsort,segment,t,y)
 		else
 			if i == nseg + 1
 				tjoin[i] = t[end]
-				yjoin[i] = calculate_yval(t[end],getpoint(segment[segsort[left]],3,boundtype,t,y),
+				yjoin[i] = calculate_yval(t[end],getpoint(segment[segsort[left]],boundtype,3,t,y),
 										  segment[segsort[left]].slope)
 			else
 				(tjoin[i],yjoin[i]) = calc_seg_intersection!(pt,segment[segsort[[left,i]]],boundtype,t,y)
-				#println("      yjoin[$(i)] is $(yjoin[i]),  left = $(left), i = $(i)")
-				#display(segment[segsort[left]])
-				#display(segment[segsort[i]])
-				#println("")
 			end
 			if tjoin[i] - tjoin[left] <= 0.0  && (left == 1 || left == nseg ||
 												  middleslope(segment,segsort,left-1:left+1))
 				# legal swallow of segment left
-				println("        legally SWALLOWING segment $(left) of $(nseg)")
-				println("           slopes are: ")
-				@show [segment[segsort[j]].slope for j in max(1,left-1):min(nseg,left+1)]
-				println("           tjoins are: ")
-				@show tjoin[[left,i]]
 				tjoin[left] = NaN
 				left = findprev(!isnan, tjoin, left-1)
 			else
-				println("Computed boundtype $(boundtype) tjoin[$(i)] as $(tjoin[i]), yjoin as $(yjoin[i])")
-				println("   heights of segments were $(segment[segsort[left]].height), $(segment[segsort[min(nseg,i)]].height)")
-				println("   delta is $(tjoin[i] - tjoin[left]), slopes are $([segment[segsort[j]].slope for j in max(1,left-1):min(length(segsort),left+1)])")
-				if i != left+1 && i<=length(segsort)
-					println("     slope of segment i=$(i) is $(segment[segsort[i]].slope)")
-				end
 				finished = true
 			end
 		end
@@ -67,21 +50,21 @@ end
 function joinseg_bound!(tjoin,yjoin,i,boundtype,segsort,segment,t,y,tmin_constraint)
 	# Join the lower or upper bound for segment i and its left unswallowed neighbour.
 	# This function is called after a valid set of tjoin points for the midline has been
-	# found defining a valid constant height band.  This function is then called 
-	# if the user wanted a variable height band.  In this case, it is possible that 
-	# other segments could be legally swallowed (slope between neighbouring slopes) even
-	# though the midline was not swallowed.  Such is taken care of by calling tjoin!.  It
-	# is also possible that tmin_constraint violoations or non-legal swallowings may occur.  In this case we expand the
-	# heights of the segment and its two neighbours (starting with the shortest and when
-	# it reaches the next height, both are increased, etc.) until the tmin_constraint
-	# condition is satisfied.
-	# Expanding the heights of the segments will work to remove the constraint violation because once all three heights are the same the
-	# tjoin points will be the same as the midline, and it was legal.
-	# If the height of the band to the left or the middle is increased, then we will need
-	# to recompute that tjoin (tjoins are computed left to right).
-	# Return value is the next tjoin value to be computed.  This will either be i+1, or,
-	# if any segment from i or lower has had its height increased, then it will be the
-	# minimum index for such segments.
+	# found defining a valid constant height band.  This function is then called if the
+	# user wanted a variable height band.  In this case, it is possible that other
+	# segments could be legally swallowed (slope between neighbouring slopes) even though
+	# the midline was not swallowed.  Such is taken care of by calling tjoin!.  It is also
+	# possible that tmin_constraint violoations or non-legal swallowings may occur.  In
+	# this case we expand the heights of the segment and its two neighbours (starting with
+	# the shortest and when it reaches the next height, both are increased, etc.) until
+	# the tmin_constraint condition is satisfied.  Expanding the heights of the segments
+	# will work to remove the constraint violation because once all three heights are the
+	# same the tjoin points will be the same as the midline, and it was legal.  If the
+	# height of the band to the left or the middle is increased, then we will need to
+	# recompute that tjoin (tjoins are computed left to right).  Return value is the next
+	# tjoin value to be computed.  This will either be i+1, or, if any segment from i or
+	# lower has had its height increased, then it will be the minimum index for such
+	# segments.
 	nseg = length(segsort)
 	joinseg!(tjoin,yjoin,i,boundtype,segsort,segment,t,y)
 	middle = findprev(!isnan, tjoin, i-1)
@@ -94,26 +77,13 @@ function joinseg_bound!(tjoin,yjoin,i,boundtype,segsort,segment,t,y,tmin_constra
 	else 
 		left = nothing
 	end
-	println(" i=$(i), middle=$(middle), left=$(left), delta_t = $(delta_t)")
-	if !isnothing(middle)
-		@show segment[segsort[middle]]
-		@show t[segment[segsort[middle]].first]
-	end
-	if i <= nseg
-		@show segment[segsort[i]]
-		@show t[segment[segsort[i]].first]
-	end
-	println(" computed tjoin, yjoin as: $(tjoin[i]), $(yjoin[i])")
 	if !isnothing(middle) && !isnothing(left) && i < nseg && delta_t < 0.0 #-tmin_constraint*1.0e-14
 		# record heights
 		ind = [left,middle,i]
 		heights_orig = [segment[segsort[j]].height for j in ind]
-		@show heights_orig
 		p = sortperm(heights_orig)
 		heights_sorted = heights_orig[p]
-		@show heights_sorted
 		slopes = [segment[segsort[j]].slope for j in ind]
-		@show slopes
 		# hfun is the change in height of each segment, j = 1,2, or 3.
 		hfun(j,h) = max(heights_orig[j],h) - heights_orig[j]
 		# joinfun will be the possible new tjoin point, j should be 2 or 3
@@ -123,14 +93,10 @@ function joinseg_bound!(tjoin,yjoin,i,boundtype,segsort,segment,t,y,tmin_constra
 		# delta is a piecewise linear function of h
 		delta(h) = joinfun(3,h) - joinfun(2,h) - tmin_constraint
 		val2 = delta(heights_sorted[2])
-		@show delta_t
-		@show val2
 		if val2 >= 0.0
 			# we only need to raise the height of the lowest segment part way to
 			# heights_sorted[2]
-			# @show heights_sorted
 			height = (heights_sorted[1]*val2 - heights_sorted[2]*delta_t)/(val2 - delta_t)
-			println("updating height for segment $(ind[p[1]]) from $(segment[segsort[ind[p[1]]]].height) to $(height)")
 			newheight = (heights_sorted[1]*val2 - heights_sorted[2]*delta_t)/(val2 - delta_t)
 			# increase height by 1.0e-6 the distance between two lowest heights to avoid
 			# round off errors causing the height to be bit too small
@@ -139,9 +105,8 @@ function joinseg_bound!(tjoin,yjoin,i,boundtype,segsort,segment,t,y,tmin_constra
 			nextcompute = ind[p[1]]
 		else
 			val3 = delta(heights_sorted[3])
-			println("     val3 should be >0, is $(val3)")
 			if val3 <= 0.0
-				read(stdin,1)
+				error("val3 is nonpositive")
 			end
 			# it must be that val3 > 0.  So height must be raised part way between heights_sorted[2]
 			# and heights_sorted[3], so shortest two segments need updating.
@@ -149,7 +114,6 @@ function joinseg_bound!(tjoin,yjoin,i,boundtype,segsort,segment,t,y,tmin_constra
 			# increase height by 1.0e-6 the distance between two largest heights to avoid
 			# round off errors causing the height to be bit too small
 			newheight = min(heights_sorted[3],newheight*(1.0 + 1.0e-6*(heights_sorted[3] - heights_sorted[2])))
-			println("updating heights for segments $(ind[p[1]]) and $(ind[p[2]]) from $(segment[segsort[ind[p[1]]]].height) and $(segment[segsort[ind[p[2]]]].height) to $(newheight)")
 			updateheight!(segment,segsort[ind[p[1]]],newheight)
 			updateheight!(segment,segsort[ind[p[2]]],newheight)
 			nextcompute = min(ind[p[1]],ind[p[2]])
@@ -157,8 +121,6 @@ function joinseg_bound!(tjoin,yjoin,i,boundtype,segsort,segment,t,y,tmin_constra
 	else
 		nextcompute = i+1
 	end
-	println("               ****************************")
-	println("              nextcompute = $(nextcompute)")
 	return nextcompute
 end
 
@@ -201,10 +163,6 @@ function calc_seg_intersection!(pt,segments,boundtype,t,y)
 	for j=1:2
 		pt[j] = getpoint(segments[j],boundtype,j,t,y)  # j=2 will be converted to 3 by getpoint
 	end
-	println("  slopes are:")
-	display((segments[1].slope,segments[2].slope))
-	println("   points are:")
-	@show pt
 	(tint, yint) = lineintersect(pt[1],segments[1].slope,pt[2],segments[2].slope)
 	return (tint,yint)
 end
