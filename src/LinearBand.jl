@@ -291,7 +291,6 @@ function linearband(t,y,tmin_constraint;minheightfrac=0.8,variableheight=false)
 		end
 	end
 	# Calculate (t,y) values for the lower and upper boundaries of the band
-	tt = soln[1].tjoin[.!isnan.(soln[1].tjoin)]
 	(LB,UB) = calculateband(soln[1],segment,t,y,tmin_constraint,variableheight,minheightfrac)
 
 	# rescale back to original units

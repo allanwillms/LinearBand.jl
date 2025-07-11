@@ -6,7 +6,7 @@ function sandwich!(segment, t, y)
 	# if there only two points in the segment, then height is zero and res is zero
 	if length(segind) < 3
 		slope = (y[segment.last] - y[segment.first])/(t[segment.last] - t[segment.first])
-		return Segment(segment.first,segment.last,segment.splittable,slope,0.0,[1,2,0],[0,0,0])
+		return Segment(segment.first,segment.last,segment.splittable,slope,0.0,[1,2,2],[0,0,0])
 	end
 	tseg = t[segind]
 	yseg = y[segind]

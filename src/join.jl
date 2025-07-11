@@ -160,8 +160,8 @@ function calc_seg_intersection!(pt,segments,boundtype,t,y)
 	# boundtype = -1, 0, or 1, resp.) of two given segments (which should be ordered left
 	# to right),
 	# pt is an array of two tuples of 2 floats, used for storage
-	for j=1:2
-		pt[j] = getpoint(segments[j],boundtype,j,t,y)  # j=2 will be converted to 3 by getpoint
+	for (j,k) in zip(1:2,(1,3)) 
+		pt[j] = getpoint(segments[j],boundtype,k,t,y) 
 	end
 	(tint, yint) = lineintersect(pt[1],segments[1].slope,pt[2],segments[2].slope)
 	return (tint,yint)
@@ -173,9 +173,6 @@ function getpoint(seg,boundtype,k,t,y)
 	# The segment height value may be larger than the minimum band going through the
 	# pivots.  This happens when joinset_bound! is called in the variable height case.  So
 	# we compute the minimum band height from the first two pivot points.
-	if k != 1
-		k = 3
-	end
 	loc1 = seg.first - 1 + seg.pivot[k]
 	loc2 = seg.first - 1 + seg.pivot[2]
 	minbandheight = abs(y[loc2] - y[loc1] - seg.slope*(t[loc2] - t[loc1]))

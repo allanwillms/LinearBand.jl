@@ -57,15 +57,15 @@ using Test
 		t = range(0.0,10.0,50); y = @. sin(t) + 0.2*cos(7*t);
 		tmin_constraint = 0.3;
 		(band,height,tmin) = LinearBand.linearband(t,y,tmin_constraint,variableheight=true);
-		@test height ≈ 0.178072 atol = 1.0e-6
-		@test tmin ≈ 0.341476 atol = 1.0e-6
+		@test height ≈ 0.106988 atol = 1.0e-6
+		@test tmin ≈ 0.387887 atol = 1.0e-6
 		@test band[1][1,1] == t[1]
 		@test band[2][1,1] == t[1]
 		@test band[1][end,1] == t[end]
 		@test band[2][end,1] == t[end]
-		@test band[1][15,1] - band[2][15,1] ≈ 0.026049 atol = 1.0e-6
-		@test band[1][3,2] ≈ 0.890467 atol = 1.0e-6
-		@test band[2][21,2] ≈ 0.694347 atol = 1.0e-6
+		@test band[1][15,1] - band[2][15,1] ≈ -0.466047 atol = 1.0e-6
+		@test band[1][3,2] ≈ 0.916596 atol = 1.0e-6
+		@test band[2][21,2] ≈ 1.128798 atol = 1.0e-6
 		@test tmintest(tmin_constraint,band[1])
 		@test tmintest(tmin_constraint,band[2])
 	end
@@ -77,10 +77,10 @@ using Test
 		@test length(height) == 2
 		@test length(tmin) == 2
 		@test height[1] ≈ 0.347954 atol = 1.0e-6
-		@test height[2] ≈ 0.271780 atol = 1.0e-6
+		@test height[2] ≈ 0.272982 atol = 1.0e-6
 		@test tmin[1] ≈ 0.988274 atol = 1.0e-6
-		@test tmin[2] ≈ 0.381371 atol = 1.0e-6
-		@test band[1][1][11,2] ≈ 0.830181 atol = 1.0e-6
-		@test band[2][2][8,1] ≈ 4.388650 atol = 1.0e-6
+		@test tmin[2] ≈ 1.148560 atol = 1.0e-6
+		@test band[1][1][11,2] ≈ 0.830182 atol = 1.0e-6
+		@test band[2][2][8,1] ≈ 5.926002 atol = 1.0e-6
 	end
 end
